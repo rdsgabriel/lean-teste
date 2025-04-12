@@ -1,21 +1,45 @@
-import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import {
-  ApiListUsers,
+  ApiOrderListUsers,
   ApiFindUserById,
   ApiCreateUser,
   ApiUpdateUserStatus,
+  ApiOrderByQuery,
+  ApiOrderQuery,
+  ApiSearchUsers,
+  ApiFilterUsers,
 } from './swagger.decorators';
+import { UserFilterDto } from './dto/filter.dto';
 
 @Controller('usuarios')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiListUsers()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  @ApiOrderListUsers()
+  @ApiOrderByQuery()
+  @ApiOrderQuery()
+  async orderBy(
+    @Query('orderBy') orderBy: string = 'id',
+    @Query('order') order: 'ASC' | 'DESC' = 'ASC',
+  ): Promise<User[]> {
+    return this.usersService.orderBy(orderBy, order);
+  }
+
+  @Get('search')
+  @ApiSearchUsers()
+  async searchUsers(@Query('searchTerm') searchTerm: string): Promise<User[]> {
+    return this.usersService.findBySearchTerm(searchTerm);
   }
 
   @Get(':id')
@@ -50,5 +74,12 @@ export class UsersController {
     @Body() body: { status: boolean },
   ): Promise<User> {
     return this.usersService.updateStatus(id, body.status);
+    // lembnrar de add logica do sqs
+  }
+
+  @Post('filter')
+  @ApiFilterUsers()
+  async findWithFilters(@Body() filterDto: UserFilterDto): Promise<User[]> {
+    return this.usersService.findWithFilters(filterDto);
   }
 }
