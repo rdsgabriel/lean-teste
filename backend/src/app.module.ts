@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import * as crypto from 'crypto';
+import { UsersModule } from './users/users.module';
 
 Object.defineProperty(global, 'crypto', {
   value: {
@@ -14,6 +15,7 @@ Object.defineProperty(global, 'crypto', {
 
 @Module({
   imports: [
+    UsersModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -29,11 +31,10 @@ Object.defineProperty(global, 'crypto', {
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: ['dist/**/*.entity.js'],
-        synchronize: false,
+        synchronize: true,
       }),
     }),
   ],
-
   controllers: [AppController],
   providers: [AppService],
 })
