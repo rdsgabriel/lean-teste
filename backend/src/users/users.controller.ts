@@ -72,9 +72,21 @@ export class UsersController {
   async updateStatus(
     @Param('id') id: number,
     @Body() body: { status: boolean },
-  ): Promise<User> {
-    return this.usersService.updateStatus(id, body.status);
-    // lembnrar de add logica do sqs
+  ) {
+    const user = await this.usersService.updateStatus(id, body.status);
+    return {
+      user,
+      sqsSimulation: {
+        message: {
+          userId: user.id,
+          newStatus: user.isActive,
+          timestamp: new Date().toISOString(),
+          action: 'UPDATE_STATUS',
+        },
+        status: 'success',
+        details: 'Mensagem enviada com sucesso para a fila SQS (simulação)',
+      },
+    };
   }
 
   @Post('filter')

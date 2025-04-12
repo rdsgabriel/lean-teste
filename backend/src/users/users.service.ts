@@ -119,11 +119,16 @@ export class UsersService {
       action: 'UPDATE_STATUS',
     };
 
+    console.log('\n=== SIMULAÇÃO SQS INICIADA ===');
+    console.log('Mensagem:', message);
     this.logger.log(
       `[SQS Simulation] Enviando mensagem para fila: ${JSON.stringify(message)}`,
     );
-    // Simula um delay como se estivesse enviando para o SQS
+
     await new Promise((resolve) => setTimeout(resolve, 100));
+
+    console.log('Mensagem enviada com sucesso!');
+    console.log('=== SIMULAÇÃO SQS FINALIZADA ===\n');
     this.logger.log('[SQS Simulation] Mensagem enviada com sucesso');
   }
 
@@ -131,7 +136,6 @@ export class UsersService {
     const user = await this.findOne(id);
     user.isActive = status;
 
-    // Simula envio para SQS antes de salvar a alteração
     await this.simulateSQSMessage(id, status);
 
     return await this.usersRepository.save(user);
