@@ -5,103 +5,67 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 import { Box, Typography, Button, InputAdornment, IconButton, CircularProgress } from "@mui/material"
 import { StyledTextField } from "../ui/StyledTextField"
-
-interface FormData {
-  username: string
-  name: string
-  phone: string
-  password: string
-  confirmPassword: string
-}
-
-interface FormErrors {
-  username: string
-  name: string
-  phone: string
-  password: string
-  confirmPassword: string
-}
+import { useFormStore } from "../../store/formStore"
 
 export function RegisterForm() {
-  const [formData, setFormData] = useState<FormData>({
-    username: "",
-    name: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  })
-
-  const [errors, setErrors] = useState<FormErrors>({
-    username: "",
-    name: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  })
-
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
-  const handleChange = (field: keyof FormData) => (
+  const {
+    registerForm,
+    registerErrors,
+    setRegisterField,
+    validateRegisterForm,
+    resetForms
+  } = useFormStore()
+
+  const handleChange = (field: keyof typeof registerForm) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: e.target.value,
-    }))
-    setErrors((prev) => ({
-      ...prev,
-      [field]: "",
-    }))
+    let value = e.target.value
+
+    // Se for o campo de telefone, formata o valor
+    if (field === 'phone') {
+      // Remove caracteres não numéricos
+      value = value.replace(/\D/g, '')
+      
+      // Limita a 11 dígitos
+      if (value.length > 11) {
+        value = value.slice(0, 11)
+      }
+      
+      // Formata o número
+      if (value.length > 0) {
+        // DDD
+        value = `(${value.slice(0, 2)}`
+        
+        if (value.length > 2) {
+          // Número
+          value += `) ${value.slice(2)}`
+          
+          // Se for celular (11 dígitos)
+          if (value.length > 9) {
+            value = value.slice(0, 10) + '-' + value.slice(10)
+          }
+          // Se for fixo (10 dígitos)
+          else if (value.length > 8) {
+            value = value.slice(0, 9) + '-' + value.slice(9)
+          }
+        }
+      }
+    }
+
+    setRegisterField(field, value)
     setError(null)
-  }
-
-  const validateForm = () => {
-    const newErrors = { ...errors }
-    let hasError = false
-
-    if (!formData.username) {
-      newErrors.username = "O nome de usuário é obrigatório"
-      hasError = true
-    }
-
-    if (!formData.name) {
-      newErrors.name = "O nome é obrigatório"
-      hasError = true
-    }
-
-    if (!formData.phone) {
-      newErrors.phone = "O telefone é obrigatório"
-      hasError = true
-    }
-
-    if (!formData.password) {
-      newErrors.password = "A senha é obrigatória"
-      hasError = true
-    } else if (formData.password.length < 6) {
-      newErrors.password = "A senha deve ter pelo menos 6 caracteres"
-      hasError = true
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "A confirmação de senha é obrigatória"
-      hasError = true
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "As senhas não coincidem"
-      hasError = true
-    }
-
-    setErrors(newErrors)
-    return !hasError
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) return
+    if (!validateRegisterForm()) return
 
     try {
       setIsLoading(true)
@@ -113,10 +77,10 @@ export function RegisterForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username,
-          name: formData.name,
-          phone: formData.phone,
-          password: formData.password,
+          username: registerForm.username,
+          name: registerForm.name,
+          phone: registerForm.phone.replace(/\D/g, ''),
+          password: registerForm.password,
         }),
       })
 
@@ -127,6 +91,7 @@ export function RegisterForm() {
         throw new Error(errorData.message || "Erro ao criar usuário")
       }
 
+      resetForms()
       router.replace("/login")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar usuário")
@@ -160,11 +125,11 @@ export function RegisterForm() {
         <StyledTextField
           id="username"
           fullWidth
-          value={formData.username}
+          value={registerForm.username}
           onChange={handleChange("username")}
           placeholder="Digite seu nome de usuário"
-          error={!!errors.username}
-          helperText={errors.username}
+          error={!!registerErrors.username}
+          helperText={registerErrors.username}
           size="small"
           disabled={isLoading}
         />
@@ -187,11 +152,11 @@ export function RegisterForm() {
         <StyledTextField
           id="name"
           fullWidth
-          value={formData.name}
+          value={registerForm.name}
           onChange={handleChange("name")}
           placeholder="Digite seu nome completo"
-          error={!!errors.name}
-          helperText={errors.name}
+          error={!!registerErrors.name}
+          helperText={registerErrors.name}
           size="small"
           disabled={isLoading}
         />
@@ -214,11 +179,11 @@ export function RegisterForm() {
         <StyledTextField
           id="phone"
           fullWidth
-          value={formData.phone}
+          value={registerForm.phone}
           onChange={handleChange("phone")}
-          placeholder="Digite seu telefone"
-          error={!!errors.phone}
-          helperText={errors.phone}
+          placeholder="(00) 00000-0000"
+          error={!!registerErrors.phone}
+          helperText={registerErrors.phone}
           size="small"
           disabled={isLoading}
         />
@@ -242,11 +207,11 @@ export function RegisterForm() {
           id="password"
           type={showPassword ? "text" : "password"}
           fullWidth
-          value={formData.password}
+          value={registerForm.password}
           onChange={handleChange("password")}
           placeholder="******"
-          error={!!errors.password}
-          helperText={errors.password}
+          error={!!registerErrors.password}
+          helperText={registerErrors.password}
           size="small"
           disabled={isLoading}
           InputProps={{
@@ -291,11 +256,11 @@ export function RegisterForm() {
           id="confirmPassword"
           type={showConfirmPassword ? "text" : "password"}
           fullWidth
-          value={formData.confirmPassword}
+          value={registerForm.confirmPassword}
           onChange={handleChange("confirmPassword")}
           placeholder="******"
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword}
+          error={!!registerErrors.confirmPassword}
+          helperText={registerErrors.confirmPassword}
           size="small"
           disabled={isLoading}
           InputProps={{

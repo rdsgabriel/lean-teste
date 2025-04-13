@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react"
 import { Box, Container, Typography, TextField, Button, InputAdornment, IconButton, CircularProgress, Fade } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { useAuth } from "../contexts/AuthContext"
+import { useFormStore } from "../store/formStore"
 import Link from "next/link"
 
 const StyledTextField = styled(TextField)({
@@ -29,33 +30,23 @@ const StyledTextField = styled(TextField)({
 })
 
 export default function Login() {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [usernameError, setUsernameError] = useState("")
-  const [passwordError, setPasswordError] = useState("")
   const { login, isLoading, error } = useAuth()
+  const {
+    loginForm,
+    loginErrors,
+    setLoginField,
+    validateLoginForm,
+    resetForms
+  } = useFormStore()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setUsernameError("")
-    setPasswordError("")
 
-    let hasError = false
+    if (!validateLoginForm()) return
 
-    if (!username) {
-      setUsernameError("O nome de usuário é obrigatório")
-      hasError = true
-    }
-
-    if (!password) {
-      setPasswordError("A senha é obrigatória")
-      hasError = true
-    }
-
-    if (!hasError) {
-      await login(username, password)
-    }
+    await login(loginForm.username, loginForm.password)
+    resetForms()
   }
 
   return (
@@ -83,13 +74,13 @@ export default function Login() {
                   mb: 3
                 }}
               >
-                LOGO
+                LEAN SAUDE :)
               </Typography>
               <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                Bem-vindo(a)!
+                Bem-vindo de volta
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Acesse sua conta para iniciar a sessão
+                Digite suas credenciais para acessar sua conta
               </Typography>
             </Box>
 
@@ -112,11 +103,11 @@ export default function Login() {
                 <StyledTextField
                   id="username"
                   fullWidth
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={loginForm.username}
+                  onChange={(e) => setLoginField('username', e.target.value)}
                   placeholder="Digite seu usuário"
-                  error={!!usernameError || !!error}
-                  helperText={usernameError || error}
+                  error={!!loginErrors.username || !!error}
+                  helperText={loginErrors.username || error}
                   size="small"
                   disabled={isLoading}
                 />
@@ -141,11 +132,11 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   fullWidth
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={loginForm.password}
+                  onChange={(e) => setLoginField('password', e.target.value)}
                   placeholder="******"
-                  error={!!passwordError}
-                  helperText={passwordError}
+                  error={!!loginErrors.password}
+                  helperText={loginErrors.password}
                   size="small"
                   disabled={isLoading}
                   InputProps={{
@@ -159,7 +150,6 @@ export default function Login() {
                           disabled={isLoading}
                           sx={{
                             opacity: isLoading ? 0.7 : 1,
-                            transition: 'opacity 0.2s ease-in-out'
                           }}
                         >
                           {showPassword ? 
@@ -171,26 +161,6 @@ export default function Login() {
                     ),
                   }}
                 />
-              </Box>
-
-              <Box sx={{ textAlign: 'right', mb: 3 }}>
-                <Typography 
-                  component="a" 
-                  href="#" 
-                  sx={{ 
-                    color: 'primary.main',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    opacity: isLoading ? 0.7 : 1,
-                    transition: 'opacity 0.2s ease-in-out',
-                    pointerEvents: isLoading ? 'none' : 'auto',
-                    '&:hover': {
-                      textDecoration: 'underline'
-                    }
-                  }}
-                >
-                  Esqueceu sua senha?
-                </Typography>
               </Box>
 
               <Button
@@ -211,17 +181,6 @@ export default function Login() {
                   mb: 2
                 }}
               >
-                <Fade in={isLoading} timeout={200}>
-                  <CircularProgress
-                    size={24}
-                    sx={{
-                      color: 'white',
-                      position: 'absolute',
-                      left: '50%',
-                      marginLeft: '-12px'
-                    }}
-                  />
-                </Fade>
                 <Box 
                   component="span" 
                   sx={{ 
@@ -232,6 +191,17 @@ export default function Login() {
                 >
                   {isLoading ? "Entrando..." : "Acessar plataforma"}
                 </Box>
+                {isLoading && (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      color: 'white',
+                      position: 'absolute',
+                      left: '50%',
+                      marginLeft: '-12px'
+                    }}
+                  />
+                )}
               </Button>
 
               <Box sx={{ textAlign: 'center' }}>

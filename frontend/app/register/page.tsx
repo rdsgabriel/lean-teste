@@ -7,6 +7,15 @@ import { RegisterForm } from "../components/forms/RegisterForm"
 export default function Register() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      <Box 
+        sx={{ 
+          display: { xs: 'none', md: 'block' },
+          width: '50%',
+          bgcolor: 'primary.main',
+          order: { xs: 2, md: 1 }
+        }} 
+      />
+
       <Container 
         maxWidth="sm" 
         sx={{ 
@@ -14,7 +23,10 @@ export default function Register() {
           flexDirection: 'column', 
           justifyContent: 'center',
           py: 6,
-          px: { xs: 2, sm: 6 }
+          px: { xs: 2, sm: 6 },
+          order: { xs: 1, md: 2 },
+          ml: { md: 'auto' },
+          mr: { md: 0 }
         }}
       >
         <Fade in={true}>
@@ -30,7 +42,7 @@ export default function Register() {
                   mb: 3
                 }}
               >
-                LOGO
+                LEAN SAUDE :)
               </Typography>
               <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
                 Criar conta
@@ -61,14 +73,6 @@ export default function Register() {
           </Box>
         </Fade>
       </Container>
-
-      <Box 
-        sx={{ 
-          display: { xs: 'none', md: 'block' },
-          width: '50%',
-          bgcolor: 'primary.main'
-        }} 
-      />
     </Box>
   )
 } 
