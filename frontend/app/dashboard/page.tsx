@@ -11,6 +11,7 @@ import { useUsers } from "../hooks/useUsers"
 import { UserStatus } from "../components/UserStatus"
 import { UserActions } from "../components/UserActions"
 import { UsersFilters } from "../components/UsersFilters"
+import { Header } from "../components/Header"
 
 export default function Dashboard() {
   const {
@@ -112,11 +113,13 @@ export default function Dashboard() {
   }
 
   return (
-    <Box sx={{ p: 3, bgcolor: '#FAFAFA', minHeight: '100vh' }}>
-      <Typography 
-        variant="h1" 
-        sx={{ 
-          fontSize: '2rem',
+    <Box sx={{ p: 4 }}>
+      <Header />
+      
+      <Typography
+        variant="h1"
+        sx={{
+          fontSize: 32,
           fontWeight: 500,
           color: '#18181B',
           mb: 3
