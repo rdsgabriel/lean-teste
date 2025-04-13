@@ -1,191 +1,167 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
-import { 
-  DataGrid, 
-  GridToolbar,
-  GridFilterModel,
-  GridLogicOperator,
-} from '@mui/x-data-grid'
+import React from "react"
 import { 
   Box, 
-  Container, 
-  Typography, 
-  Paper,
-  AppBar,
-  Toolbar,
-  Button,
+  Typography,
+  CircularProgress,
 } from '@mui/material'
-import { useUserStore } from "@/store/userStore"
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { FilterToolbar } from "@/components/dashboard/FilterToolbar"
-import { UserStatusMenu } from "@/components/dashboard/UserStatusMenu"
-import { SortDialog } from "@/components/dashboard/SortDialog"
-import { getUserGridColumns } from "@/components/dashboard/userGridColumns"
+import { DataGrid, GridRenderCellParams, GridValueGetterParams } from '@mui/x-data-grid'
+import { useUsers } from "../hooks/useUsers"
+import { UserStatus } from "../components/UserStatus"
+import { UserActions } from "../components/UserActions"
 import { UsersFilters } from "../components/UsersFilters"
-import { UsersTable } from "../components/UsersTable"
 
 export default function Dashboard() {
-  const { users, toggleUserStatus } = useUserStore()
-  const [paginationModel, setPaginationModel] = useState({
-    pageSize: 10,
-    page: 0,
+  const {
+    users,
+    totalUsers,
+    isLoading,
+    error,
+    toggleStatus
+  } = useUsers({
+    page: 1,
+    perPage: 10
   })
-  const [filterModel, setFilterModel] = useState<GridFilterModel>({
-    items: [],
-    logicOperator: GridLogicOperator.And,
-  })
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedRow, setSelectedRow] = useState<number | null>(null)
-  const [sortDialogOpen, setSortDialogOpen] = useState(false)
-  const [sortField, setSortField] = useState('name')
 
-  // Transform user data to match data grid requirements
-  const rows = useMemo(() => {
-    return users.map(user => ({
-      id: user.id,
-      name: user.name,
-      phone: user.phone,
-      registerDate: user.registerDate,
-      active: user.active,
-    }))
-  }, [users])
+  const columns = [
+    { 
+      field: 'id', 
+      headerName: 'ID', 
+      width: 90 
+    },
+    {
+      field: 'name',
+      headerName: 'Nome',
+      flex: 1,
+      minWidth: 150,
+    },
+    {
+      field: 'phone',
+      headerName: 'Telefone',
+      flex: 1,
+      minWidth: 150,
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Data de cadastro',
+      flex: 1,
+      minWidth: 150,
+      valueGetter: (params: GridValueGetterParams) => 
+        new Date(params.row.createdAt).toLocaleDateString('pt-BR'),
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params: GridRenderCellParams) => (
+        <UserStatus 
+          status={params.row.isActive ? "active" : "inactive"}
+          onToggle={() => toggleStatus.mutate({ userId: params.row.id, status: !params.row.isActive })}
+        />
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      width: 120,
+      sortable: false,
+      filterable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <UserActions 
+          userData={params.row}
+          onToggleStatus={({ userId, status }) => toggleStatus.mutate({ userId, status })}
+        />
+      ),
+    },
+  ]
 
-  // Handle menu click
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, id: number) => {
-    setAnchorEl(event.currentTarget)
-    setSelectedRow(id)
+  if (isLoading) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: '100vh'
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
   }
 
-  // Handle menu close
-  const handleClose = () => {
-    setAnchorEl(null)
-    setSelectedRow(null)
+  if (error) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: '100vh',
+          flexDirection: 'column',
+          gap: 2
+        }}
+      >
+        <Typography color="error">
+          Erro ao carregar usuários. Por favor, tente novamente.
+        </Typography>
+      </Box>
+    )
   }
-
-  // Status change handlers
-  const handleActivate = () => {
-    if (selectedRow !== null) {
-      toggleUserStatus(selectedRow, true)
-      handleClose()
-    }
-  }
-
-  const handleDeactivate = () => {
-    if (selectedRow !== null) {
-      toggleUserStatus(selectedRow, false)
-      handleClose()
-    }
-  }
-
-  // Apply sort from dialog
-  const handleApplySort = () => {
-    setSortDialogOpen(false)
-    // The sort is applied directly to the DataGrid
-  }
-
-  // Get columns with handlers
-  const columns = useMemo(() => getUserGridColumns(handleMenuClick), [])
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar 
-        position="static" 
-        elevation={0}
+    <Box sx={{ p: 3, bgcolor: '#FAFAFA', minHeight: '100vh' }}>
+      <Typography 
+        variant="h1" 
         sx={{ 
-          backgroundColor: "white",
-          borderBottom: "1px solid",
-          borderColor: "divider"
+          fontSize: '2rem',
+          fontWeight: 500,
+          color: '#18181B',
+          mb: 3
         }}
       >
-        <Container maxWidth={false}>
-          <Toolbar disableGutters sx={{ gap: 3 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                color: "text.primary",
-                fontWeight: 600,
-                mr: 4
-              }}
-            >
-              LOGO
-            </Typography>
+        Usuários
+      </Typography>
 
-            <Button
-              sx={{
-                color: "primary.main",
-                textTransform: "none",
-                borderRadius: 1,
-                minWidth: 0,
-                borderBottom: 2,
-                borderColor: "primary.main",
-                "&:hover": {
-                  backgroundColor: "transparent",
-                }
-              }}
-            >
-              Clientes
-            </Button>
+      <UsersFilters />
 
-            <Button
-              sx={{
-                color: "text.secondary",
-                textTransform: "none",
-                borderRadius: 1,
-                minWidth: 0,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  color: "primary.main",
-                }
-              }}
-            >
-              Endereços
-            </Button>
-
-            <Button
-              sx={{
-                color: "text.secondary",
-                textTransform: "none",
-                borderRadius: 1,
-                minWidth: 0,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                  color: "primary.main",
-                }
-              }}
-            >
-              Entregas
-            </Button>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
-      <Container 
-        maxWidth={false} 
-        sx={{ 
-          py: 3,
-          display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          bgcolor: "#fafafa"
-        }}
-      >
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            mb: 3, 
-            fontWeight: 500,
-            color: "text.primary" 
+      <Box sx={{ 
+        bgcolor: "white", 
+        borderRadius: 1, 
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        mt: 3
+      }}>
+        <DataGrid
+          rows={users}
+          columns={columns}
+          rowCount={totalUsers}
+          loading={isLoading}
+          pageSizeOptions={[10, 25, 50]}
+          paginationMode="server"
+          filterMode="server"
+          sortingMode="server"
+          disableRowSelectionOnClick
+          keepNonExistentRowsSelected
+          autoHeight
+          sx={{
+            border: 'none',
+            '& .MuiDataGrid-columnHeader': {
+              backgroundColor: 'background.paper',
+              color: 'text.primary',
+              fontWeight: 500,
+            },
+            '& .MuiDataGrid-cell': {
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
+            '& .MuiDataGrid-row:hover': {
+              backgroundColor: 'action.hover',
+            },
           }}
-        >
-          Usuários
-        </Typography>
-
-        <Box sx={{ bgcolor: "white", borderRadius: 1, p: 3, flexGrow: 1 }}>
-          <UsersFilters />
-          <UsersTable />
-        </Box>
-      </Container>
+        />
+      </Box>
     </Box>
   )
 } 

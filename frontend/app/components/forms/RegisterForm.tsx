@@ -30,29 +30,22 @@ export function RegisterForm() {
     // Se for o campo de telefone, formata o valor
     if (field === 'phone') {
       // Remove caracteres não numéricos
-      value = value.replace(/\D/g, '')
+      let numericValue = value.replace(/\D/g, '')
       
       // Limita a 11 dígitos
-      if (value.length > 11) {
-        value = value.slice(0, 11)
+      if (numericValue.length > 11) {
+        numericValue = numericValue.slice(0, 11)
       }
       
       // Formata o número
-      if (value.length > 0) {
-        // DDD
-        value = `(${value.slice(0, 2)}`
+      if (numericValue.length > 0) {
+        value = `(${numericValue.slice(0, 2)}`
         
-        if (value.length > 2) {
-          // Número
-          value += `) ${value.slice(2)}`
+        if (numericValue.length > 2) {
+          value = `${value}) ${numericValue.slice(2)}`
           
-          // Se for celular (11 dígitos)
-          if (value.length > 9) {
-            value = value.slice(0, 10) + '-' + value.slice(10)
-          }
-          // Se for fixo (10 dígitos)
-          else if (value.length > 8) {
-            value = value.slice(0, 9) + '-' + value.slice(9)
+          if (numericValue.length > 7) {
+            value = `${value.slice(0, 10)}-${numericValue.slice(7)}`
           }
         }
       }

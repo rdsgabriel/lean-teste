@@ -5,11 +5,15 @@ interface FetchOptions extends RequestInit {
   requiresAuth?: boolean
 }
 
+const API_BASE_URL = "http://localhost:3000"
+
 export function useApi() {
   const { logout } = useAuth()
 
-  const fetchApi = async (url: string, options: FetchOptions = {}) => {
+  const fetchApi = async (endpoint: string, options: FetchOptions = {}) => {
     const { requiresAuth = true, ...fetchOptions } = options
+
+    const url = `${API_BASE_URL}${endpoint}`
 
     if (requiresAuth) {
       const token = Cookies.get("access_token")

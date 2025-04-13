@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useApi } from "./useApi"
+import { GridFilterModel, GridSortModel } from "@mui/x-data-grid"
 
 export interface User {
   id: number
@@ -6,14 +8,6 @@ export interface User {
   phone: string
   isActive: boolean
   createdAt: string
-}
-
-interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
 }
 
 export enum FilterOperator {
@@ -32,93 +26,70 @@ export enum FilterField {
   CREATED_AT = "Data de cadastro",
 }
 
-interface Filter {
-  field: FilterField
-  operator: FilterOperator
-  value?: string
-  dateValue?: string
-  booleanValue?: boolean
-}
-
 interface UseUsersFilters {
   page?: number
   perPage?: number
-  search?: string
-  orderBy?: string
-  order?: "ASC" | "DESC"
-  filters?: Filter[]
+  sortModel?: GridSortModel
+  filterModel?: GridFilterModel
+  searchQuery?: string
 }
 
 export function useUsers(filters: UseUsersFilters = {}) {
   const queryClient = useQueryClient()
-  const { page = 1, perPage = 10 } = filters
+  const { fetchApi } = useApi()
+  const { 
+    page = 1, 
+    perPage = 10,
+    sortModel = [],
+    filterModel,
+    searchQuery = ""
+  } = filters
+
+  const buildQueryString = () => {
+    const params = new URLSearchParams()
+    params.append("page", String(page))
+    params.append("limit", String(perPage))
+    
+    if (searchQuery) {
+      params.append("search", searchQuery)
+    }
+
+    if (sortModel.length > 0) {
+      params.append("orderBy", sortModel[0].field)
+      params.append("order", sortModel[0].sort === "desc" ? "DESC" : "ASC")
+    }
+
+    if (filterModel?.items.length) {
+      filterModel.items.forEach((filter, index) => {
+        params.append(`filters[${index}][field]`, filter.field)
+        params.append(`filters[${index}][operator]`, filter.operator)
+        params.append(`filters[${index}][value]`, filter.value as string)
+      })
+    }
+
+    return params.toString()
+  }
 
   const {
     data: paginatedData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["users", { page, perPage }],
-    queryFn: async () => {
-      const response = await fetch(`/api/users/list?page=${page}&limit=${perPage}`)
-      if (!response.ok) throw new Error("Erro ao buscar usuários")
-      return response.json() as Promise<PaginatedResponse<User>>
-    },
+    queryKey: ["users", { page, perPage, sortModel, filterModel, searchQuery }],
+    queryFn: () => fetchApi(`/users/list?${buildQueryString()}`),
   })
 
-  const { mutate: search } = useMutation({
-    mutationFn: async (searchTerm: string) => {
-      const response = await fetch(`/api/users/search?searchTerm=${encodeURIComponent(searchTerm)}`)
-      if (!response.ok) throw new Error("Erro ao pesquisar usuários")
-      return response.json() as Promise<User[]>
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
-  })
-
-  const { mutate: applyFilters } = useMutation({
-    mutationFn: async (filters: Filter[]) => {
-      const response = await fetch("/api/users/filter", {
-        method: "POST",
+  const toggleStatus = useMutation({
+    mutationFn: ({ userId, status }: { userId: number; status: boolean }) =>
+      fetchApi(`/users/${userId}/status`, {
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ filters }),
-      })
-      if (!response.ok) throw new Error("Erro ao filtrar usuários")
-      return response.json() as Promise<User[]>
-    },
+        body: JSON.stringify({ status }),
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
-  })
-
-  const { mutate: orderUsers } = useMutation({
-    mutationFn: async ({ orderBy, order }: { orderBy: string; order: "ASC" | "DESC" }) => {
-      const response = await fetch(`/api/users?orderBy=${orderBy}&order=${order}`)
-      if (!response.ok) throw new Error("Erro ao ordenar usuários")
-      return response.json() as Promise<User[]>
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
-  })
-
-  const { mutate: toggleStatus } = useMutation({
-    mutationFn: async ({ userId, status }: { userId: number; status: boolean }) => {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isActive: status }),
-      })
-      if (!response.ok) throw new Error("Erro ao atualizar status")
-      return response.json() as Promise<User>
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
     },
   })
 
@@ -129,9 +100,6 @@ export function useUsers(filters: UseUsersFilters = {}) {
     totalPages: paginatedData?.totalPages ?? 1,
     isLoading,
     error,
-    search,
-    applyFilters,
-    orderUsers,
     toggleStatus,
   }
 } 

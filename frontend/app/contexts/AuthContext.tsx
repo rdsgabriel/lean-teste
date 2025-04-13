@@ -31,7 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null)
     Cookies.remove("user")
-    Cookies.remove("token")
+    Cookies.remove("access_token")
+    Cookies.remove("refresh_token")
     router.push("/login")
   }, [router])
 
