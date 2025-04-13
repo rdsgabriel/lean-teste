@@ -21,8 +21,10 @@ import {
   ApiFindAllUsers,
 } from './swagger.decorators';
 import { UserFilterDto } from './dto/filter.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@Controller('usuarios')
+@ApiBearerAuth('access-token')
+@Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

@@ -5,7 +5,6 @@ import * as argon2 from 'argon2';
 export const seedUsers = async (dataSource: DataSource) => {
   const userRepository = dataSource.getRepository(User);
 
-  // Verifica se já existe um usuário admin
   const existingAdmin = await userRepository.findOne({
     where: { username: 'admin' },
   });
@@ -25,7 +24,6 @@ export const seedUsers = async (dataSource: DataSource) => {
     console.log('Usuário admin criado com sucesso!');
   }
 
-  // Criar 10 usuários adicionais
   const usersToCreate = [
     { name: 'João Silva', username: 'joao', phone: '(11) 98888-8888' },
     { name: 'Maria Santos', username: 'maria', phone: '(11) 97777-7777' },

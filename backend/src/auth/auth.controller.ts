@@ -20,12 +20,14 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ApiLogin, ApiRefreshToken } from './swagger.decorators';
 import { AuthResponse } from './types/auth.types';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiLogin()
@@ -33,6 +35,7 @@ export class AuthController {
     return this.authService.login(loginDto.username, loginDto.password);
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiRefreshToken()
