@@ -21,11 +21,41 @@ import { ApiLogin, ApiRefreshToken } from './swagger.decorators';
 import { AuthResponse } from './types/auth.types';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './public.decorator';
+import { UsersService } from '../users/users.service';
+import { RegisterDto } from './dto/register.dto';
+import { User } from '../users/user.entity';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+  ) {}
+
+  @Public()
+  @Post('register')
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  @ApiResponse({
+    status: 201,
+    description: 'Usuário registrado com sucesso',
+    type: User,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos',
+  })
+  async register(@Body() registerDto: RegisterDto) {
+    const { username, password, name, phone } = registerDto;
+    const user = await this.usersService.create(
+      username,
+      password,
+      name,
+      phone,
+    );
+    const { password: _, ...result } = user;
+    return result;
+  }
 
   @Public()
   @Post('login')
