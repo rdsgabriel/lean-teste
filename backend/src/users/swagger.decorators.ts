@@ -247,3 +247,51 @@ export function ApiFilterUsers() {
     }),
   );
 }
+
+export function ApiFindAllUsers() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Listar todos os usuários com paginação',
+      description: 'Retorna uma lista paginada de usuários',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Usuários recuperados com sucesso',
+      schema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                name: { type: 'string' },
+                phone: { type: 'string' },
+                isActive: { type: 'boolean' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+          total: { type: 'number' },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+          totalPages: { type: 'number' },
+        },
+      },
+    }),
+    ApiQuery({
+      name: 'page',
+      required: false,
+      type: Number,
+      description: 'Número da página (padrão: 1)',
+    }),
+    ApiQuery({
+      name: 'limit',
+      required: false,
+      type: Number,
+      description: 'Número de itens por página (padrão: 10, máximo: 10)',
+    }),
+  );
+}

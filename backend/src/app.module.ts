@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import * as crypto from 'crypto';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 Object.defineProperty(global, 'crypto', {
   value: {
@@ -16,6 +17,7 @@ Object.defineProperty(global, 'crypto', {
 @Module({
   imports: [
     UsersModule,
+    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

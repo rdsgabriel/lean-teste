@@ -7,7 +7,7 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersService, PaginatedResponse } from './users.service';
 import { User } from './user.entity';
 import {
   ApiOrderListUsers,
@@ -18,12 +18,22 @@ import {
   ApiOrderQuery,
   ApiSearchUsers,
   ApiFilterUsers,
+  ApiFindAllUsers,
 } from './swagger.decorators';
 import { UserFilterDto } from './dto/filter.dto';
 
 @Controller('usuarios')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('list')
+  @ApiFindAllUsers()
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<PaginatedResponse<User>> {
+    return this.usersService.findAll(page, limit);
+  }
 
   @Get()
   @ApiOrderListUsers()
