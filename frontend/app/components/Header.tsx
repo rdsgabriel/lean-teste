@@ -1,12 +1,61 @@
 import { Stack, Typography, Box } from "@mui/material"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+
+const NAV_LINKS = [
+  { href: '/.', label: 'Clientes', isActive: true },
+  { href: '/.', label: 'Endereços' },
+  { href: '/.', label: 'Entregas' },
+]
+
+interface NavLinkProps {
+  href: string
+  label: string
+  isActive?: boolean
+}
+
+function NavLink({ href, label, isActive }: NavLinkProps) {
+  if (isActive) {
+    return (
+      <Box sx={{ position: 'relative' }}>
+        <Link 
+          href={href}
+          style={{ 
+            textDecoration: 'none',
+            color: '#7C3AED',
+            fontSize: '14px',
+          }}
+        >
+          {label}
+        </Link>
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -8,
+            left: 0,
+            width: '100%',
+            height: '2px',
+            bgcolor: '#7C3AED'
+          }}
+        />
+      </Box>
+    )
+  }
+
+  return (
+    <Link 
+      href={href}
+      style={{ 
+        textDecoration: 'none',
+        color: '#71717A',
+        fontSize: '14px',
+      }}
+    >
+      {label}
+    </Link>
+  )
+}
 
 export function Header() {
-  const pathname = usePathname()
-
-  const isActive = (path: string) => pathname?.startsWith(path)
-
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 5 }}>
       <Stack direction="row" alignItems="center" spacing={6}>
@@ -22,50 +71,9 @@ export function Header() {
         </Typography>
 
         <Stack direction="row" spacing={4}>
-          <Box sx={{ position: 'relative' }}>
-            <Link 
-              href="/clientes" 
-              style={{ 
-                textDecoration: 'none',
-                color: '#7C3AED',
-                fontSize: '14px',
-              }}
-            >
-              Clientes
-            </Link>
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: -8,
-                left: 0,
-                width: '100%',
-                height: '2px',
-                bgcolor: '#7C3AED'
-              }}
-            />
-          </Box>
-
-          <Link 
-            href="/enderecos"
-            style={{ 
-              textDecoration: 'none',
-              color: '#71717A',
-              fontSize: '14px',
-            }}
-          >
-            Endereços
-          </Link>
-
-          <Link 
-            href="/entregas"
-            style={{ 
-              textDecoration: 'none',
-              color: '#71717A',
-              fontSize: '14px',
-            }}
-          >
-            Entregas
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
         </Stack>
       </Stack>
 

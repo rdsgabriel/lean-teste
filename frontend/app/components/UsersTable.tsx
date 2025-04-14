@@ -93,11 +93,14 @@ export function UsersTable() {
                 <TableCell>
                   <UserStatus
                     status={user.isActive ? "active" : "inactive"}
-                    onToggle={() => toggleStatus({ userId: user.id, status: !user.isActive })}
+                    onToggle={() => toggleStatus.mutate({ userId: user.id, status: !user.isActive })}
                   />
                 </TableCell>
                 <TableCell align="right">
-                  <UserActions userData={user} />
+                  <UserActions 
+                    userData={user} 
+                    onToggleStatus={({ userId, status }) => toggleStatus.mutate({ userId, status })}
+                  />
                 </TableCell>
               </TableRow>
             ))}

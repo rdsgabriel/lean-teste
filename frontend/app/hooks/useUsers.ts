@@ -10,6 +10,13 @@ export interface User {
   createdAt: string
 }
 
+interface PaginatedResponse {
+  data: User[]
+  total: number
+  page: number
+  totalPages: number
+}
+
 export enum FilterOperator {
   EQUALS = "é",
   OR = "ou",
@@ -51,7 +58,7 @@ export function useUsers(filters: UseUsersFilters = {}) {
     params.append("limit", String(perPage))
     
     if (searchQuery) {
-      params.append("search", searchQuery)
+      params.append("searchTerm", searchQuery)
     }
 
     if (sortModel.length > 0) {
@@ -74,9 +81,49 @@ export function useUsers(filters: UseUsersFilters = {}) {
     data: paginatedData,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<PaginatedResponse, Error>({
     queryKey: ["users", { page, perPage, sortModel, filterModel, searchQuery }],
-    queryFn: () => fetchApi(`/users/list?${buildQueryString()}`),
+    queryFn: async () => {
+      let endpoint = '/users'
+      
+      if (searchQuery) {
+        endpoint = '/users/search'
+      } else if (!sortModel.length) {
+        endpoint = '/users/list'
+      }
+      
+      const url = `${endpoint}?${buildQueryString()}`
+      const response = await fetchApi(url)
+      
+      // Se for uma busca, adapta o formato da resposta
+      if (searchQuery) {
+        const start = (page - 1) * perPage
+        const end = start + perPage
+        const paginatedResults = response.slice(start, end)
+        
+        return {
+          data: paginatedResults,
+          total: response.length,
+          page,
+          totalPages: Math.ceil(response.length / perPage)
+        }
+      }
+      
+      // Se for ordenação, adapta o formato da resposta
+      if (sortModel.length > 0) {
+        return {
+          data: response.slice((page - 1) * perPage, page * perPage),
+          total: response.length,
+          page,
+          totalPages: Math.ceil(response.length / perPage)
+        }
+      }
+      
+      return response
+    },
+    staleTime: 5000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false
   })
 
   const toggleStatus = useMutation({
