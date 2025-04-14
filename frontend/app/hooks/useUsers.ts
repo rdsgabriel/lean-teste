@@ -111,12 +111,17 @@ export function useUsers(filters: UseUsersFilters = {}) {
         }
       }
 
-      // Sempre usa o endpoint /users para listagem e ordenação
-      const url = `/users?${buildQueryString()}`
+      // Usa o endpoint /users/search quando há um termo de busca
+      const endpoint = searchQuery ? '/users/search' : '/users'
+      const url = `${endpoint}?${buildQueryString()}`
       const response = await fetchApi(url)
       
+      const start = (page - 1) * perPage
+      const end = start + perPage
+      const paginatedResults = response.slice(start, end)
+      
       return {
-        data: response,
+        data: paginatedResults,
         total: response.length,
         page,
         totalPages: Math.ceil(response.length / perPage)

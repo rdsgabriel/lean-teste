@@ -1,4 +1,4 @@
-import { FILTER_FIELDS, FilterFieldValue, FilterOperatorValue } from '../constants/filterOptions'
+import {FilterFieldValue, FilterOperatorValue } from '../constants/filterOptions'
 
 export interface Filter {
   field: FilterFieldValue

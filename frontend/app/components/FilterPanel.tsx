@@ -40,7 +40,10 @@ export function FilterPanel({ filters: initialFilters, onFilterChange }: FilterP
         const newField = value as FilterFieldValue
         return {
           field: newField,
-          operator: FIELD_OPERATORS[newField][0]
+          operator: FIELD_OPERATORS[newField][0],
+          value: undefined,
+          dateValue: undefined,
+          booleanValue: undefined
         }
       }
 
@@ -58,6 +61,11 @@ export function FilterPanel({ filters: initialFilters, onFilterChange }: FilterP
         } else {
           return { ...newFilter, value: value as string }
         }
+      }
+
+      // Handle operator change
+      if (field === 'operator') {
+        return { ...filter, operator: value as FilterOperatorValue }
       }
 
       return { ...filter, [field]: value }
