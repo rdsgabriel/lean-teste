@@ -3,17 +3,22 @@ import {
   TextField,
   Button,
   InputAdornment,
+  Popover,
 } from "@mui/material"
 import { Search, KeyboardArrowDown } from "@mui/icons-material"
 import { useState, useCallback, useRef } from "react"
-import { SORT_OPTIONS, FILTER_OPTIONS, type SortField } from "../constants/sortOptions"
+import { SORT_OPTIONS, type SortField } from "../constants/sortOptions"
 import { FilterMenu } from "./FilterMenu"
+import { FilterPanel } from "./FilterPanel"
+import { Filter, FilterChangeHandler } from "../types/filter"
 
 interface UsersFiltersProps {
   searchValue: string
   onSearchChange: (value: string) => void
   onSort: (field: SortField) => void
   selectedSort?: SortField
+  onFiltersChange: FilterChangeHandler
+  filters: Filter[]
 }
 
 const useSearch = (onSearchChange: (value: string) => void) => {
@@ -42,6 +47,8 @@ const useMenuState = () => {
   }
 
   const handleFiltersClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
     setFiltersAnchorEl(event.currentTarget)
   }
 
@@ -84,7 +91,9 @@ export function UsersFilters({
   searchValue, 
   onSearchChange, 
   onSort,
-  selectedSort 
+  selectedSort,
+  onFiltersChange,
+  filters
 }: UsersFiltersProps) {
   const { searchInputRef, handleSearch, handleBlur } = useSearch(onSearchChange)
   const { 
@@ -140,7 +149,7 @@ export function UsersFilters({
         endIcon={<KeyboardArrowDown />}
         sx={filterButtonStyle}
       >
-        Filtros
+        Filtros {filters.length > 0 ? `(${filters.length})` : ''}
       </Button>
 
       <FilterMenu 
@@ -150,12 +159,28 @@ export function UsersFilters({
         onSelect={handleSort}
       />
 
-      <FilterMenu 
+      <Popover
+        open={Boolean(filtersAnchorEl)}
         anchorEl={filtersAnchorEl}
         onClose={closeFilters}
-        options={[...FILTER_OPTIONS]}
-        onSelect={() => {}}
-      />
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        PaperProps={{
+          sx: { width: '800px', p: 2 }
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FilterPanel
+          filters={filters}
+          onFilterChange={onFiltersChange}
+        />
+      </Popover>
     </Stack>
   )
 } 

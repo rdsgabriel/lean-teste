@@ -8,44 +8,125 @@ import {
   MenuItem,
   TextField,
   Button,
-  SelectChangeEvent,
 } from "@mui/material"
-import { Close, Add } from "@mui/icons-material"
-
-interface Filter {
-  column: string
-  operator: string
-  value: string
-}
+import { Close, Add, FilterAlt } from "@mui/icons-material"
+import { FILTER_FIELDS, FIELD_OPERATORS, FilterFieldValue, FilterOperatorValue } from "../constants/filterOptions"
+import { Filter, FilterChangeHandler } from "../types/filter"
+import { ChangeEvent, MouseEvent, useState } from "react"
 
 interface FilterPanelProps {
   filters: Filter[]
-  onFilterChange: (filters: Filter[]) => void
+  onFilterChange: FilterChangeHandler
 }
 
-export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
+export function FilterPanel({ filters: initialFilters, onFilterChange }: FilterPanelProps) {
+  const [localFilters, setLocalFilters] = useState<Filter[]>(initialFilters)
+
   const handleRemoveFilter = (index: number) => {
-    const newFilters = filters.filter((_, i) => i !== index)
-    onFilterChange(newFilters)
+    const newFilters = localFilters.filter((_, i) => i !== index)
+    setLocalFilters(newFilters)
   }
 
   const handleFilterChange = (
     index: number,
     field: keyof Filter,
-    value: string
+    value: string | boolean | Date | null
   ) => {
-    const newFilters = filters.map((filter, i) =>
-      i === index ? { ...filter, [field]: value } : filter
-    )
-    onFilterChange(newFilters)
+    const newFilters = localFilters.map((filter, i) => {
+      if (i !== index) return filter
+
+      // Reset values when changing field
+      if (field === 'field') {
+        const newField = value as FilterFieldValue
+        return {
+          field: newField,
+          operator: FIELD_OPERATORS[newField][0]
+        }
+      }
+
+      // Handle different value types based on field
+      if (field === 'value' || field === 'dateValue' || field === 'booleanValue') {
+        const newFilter = { ...filter }
+        delete newFilter.value
+        delete newFilter.dateValue
+        delete newFilter.booleanValue
+        
+        if (filter.field === FILTER_FIELDS.IS_ACTIVE) {
+          return { ...newFilter, booleanValue: value === 'true' }
+        } else if (filter.field === FILTER_FIELDS.CREATED_AT) {
+          return { ...newFilter, dateValue: typeof value === 'string' ? value : (value as Date)?.toISOString().split('T')[0] }
+        } else {
+          return { ...newFilter, value: value as string }
+        }
+      }
+
+      return { ...filter, [field]: value }
+    }) as Filter[]
+
+    setLocalFilters(newFilters)
   }
 
-  const handleAddFilter = () => {
-    onFilterChange([...filters, { column: "data_cadastro", operator: "é", value: "" }])
+  const handleAddFilter = (event: MouseEvent) => {
+    event.preventDefault()
+    const firstField = FILTER_FIELDS.ID
+    setLocalFilters([
+      ...localFilters,
+      {
+        field: firstField,
+        operator: FIELD_OPERATORS[firstField][0]
+      }
+    ])
   }
 
-  const handleRemoveAll = () => {
+  const handleRemoveAll = (event: MouseEvent) => {
+    event.preventDefault()
+    setLocalFilters([])
     onFilterChange([])
+  }
+
+  const handleApplyFilters = () => {
+    onFilterChange(localFilters)
+  }
+
+  const renderValueInput = (filter: Filter, index: number) => {
+    if (filter.field === FILTER_FIELDS.IS_ACTIVE) {
+      return (
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <Select
+            value={filter.booleanValue?.toString() ?? 'true'}
+            onChange={(e) => handleFilterChange(index, 'booleanValue', e.target.value)}
+          >
+            <MenuItem value="true">Ativo</MenuItem>
+            <MenuItem value="false">Inativo</MenuItem>
+          </Select>
+        </FormControl>
+      )
+    }
+
+    if (filter.field === FILTER_FIELDS.CREATED_AT) {
+      return (
+        <TextField
+          type="date"
+          size="small"
+          value={filter.dateValue ?? ''}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => handleFilterChange(index, 'dateValue', e.target.value)}
+          sx={{ width: 200 }}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      )
+    }
+
+    return (
+      <TextField
+        size="small"
+        value={filter.value ?? ''}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => handleFilterChange(index, 'value', e.target.value)}
+        placeholder={filter.field === FILTER_FIELDS.ID ? "Digite o ID..." : "Digite o valor..."}
+        sx={{ width: 200 }}
+      />
+    )
   }
 
   return (
@@ -58,8 +139,8 @@ export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
         borderRadius: "8px",
       }}
     >
-      <Stack spacing={2}>
-        {filters.map((filter, index) => (
+      <Stack spacing={2} onClick={(e) => e.stopPropagation()}>
+        {localFilters.map((filter, index) => (
           <Stack key={index} direction="row" spacing={2} alignItems="center">
             <IconButton
               size="small"
@@ -75,36 +156,31 @@ export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
 
             <FormControl size="small" sx={{ minWidth: 200 }}>
               <Select
-                value={filter.column}
-                onChange={(e: SelectChangeEvent) =>
-                  handleFilterChange(index, "column", e.target.value)
-                }
+                value={filter.field}
+                onChange={(e) => handleFilterChange(index, "field", e.target.value)}
               >
-                <MenuItem value="data_cadastro">Data de cadastro</MenuItem>
-                <MenuItem value="status">Status</MenuItem>
+                {Object.entries(FILTER_FIELDS).map(([key, value]) => (
+                  <MenuItem key={key} value={value}>
+                    {value}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select
                 value={filter.operator}
-                onChange={(e: SelectChangeEvent) =>
-                  handleFilterChange(index, "operator", e.target.value)
-                }
+                onChange={(e) => handleFilterChange(index, "operator", e.target.value)}
               >
-                <MenuItem value="é">é</MenuItem>
-                <MenuItem value="não é">não é</MenuItem>
-                <MenuItem value="contém">contém</MenuItem>
+                {FIELD_OPERATORS[filter.field].map((operator: FilterOperatorValue) => (
+                  <MenuItem key={operator} value={operator}>
+                    {operator}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
-            <TextField
-              size="small"
-              value={filter.value}
-              onChange={(e) => handleFilterChange(index, "value", e.target.value)}
-              placeholder="dd/mm/aaaa"
-              sx={{ width: 200 }}
-            />
+            {renderValueInput(filter, index)}
           </Stack>
         ))}
 
@@ -117,15 +193,26 @@ export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
             Adicionar filtro
           </Button>
 
-          <Button
-            color="error"
-            onClick={handleRemoveAll}
-            sx={{ textTransform: "none" }}
-          >
-            Remover todos
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              color="error"
+              onClick={handleRemoveAll}
+              sx={{ textTransform: "none" }}
+            >
+              Remover todos
+            </Button>
+            
+            <Button
+              variant="contained"
+              startIcon={<FilterAlt />}
+              onClick={handleApplyFilters}
+              sx={{ textTransform: "none" }}
+            >
+              Aplicar filtros
+            </Button>
+          </Stack>
         </Stack>
       </Stack>
     </Paper>
   )
-} 
+}

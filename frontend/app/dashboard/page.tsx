@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { 
   Box, 
   Typography,
@@ -13,6 +13,7 @@ import { UserActions } from "../components/UserActions"
 import { UsersFilters } from "../components/UsersFilters"
 import { Header } from "../components/Header"
 import { type SortField, type SortOrder } from "../constants/sortOptions"
+import type { Filter } from "../types/filter"
 
 interface User {
   id: number
@@ -240,6 +241,7 @@ export default function Dashboard() {
   const { searchTerm, setSearchTerm, debouncedSearch } = useSearch()
   const { page, pageSize, handlePageChange, handlePageSizeChange } = usePagination()
   const { sortField, sortOrder, handleSort } = useSort()
+  const [filters, setFilters] = useState<Filter[]>([])
 
   const {
     users,
@@ -251,8 +253,13 @@ export default function Dashboard() {
     page,
     perPage: pageSize,
     searchQuery: debouncedSearch,
-    sortModel: [{ field: sortField, sort: sortOrder.toLowerCase() as "asc" | "desc" }]
+    sortModel: [{ field: sortField, sort: sortOrder.toLowerCase() as "asc" | "desc" }],
+    filters
   })
+
+  const handleFiltersChange = (newFilters: Filter[]) => {
+    setFilters(newFilters)
+  }
 
   if (isLoading) return <LoadingState />
   if (error) return <ErrorState />
@@ -278,6 +285,8 @@ export default function Dashboard() {
         onSearchChange={setSearchTerm}
         onSort={handleSort}
         selectedSort={sortField}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
       />
 
       <UsersTable 

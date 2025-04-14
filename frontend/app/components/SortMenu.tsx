@@ -1,13 +1,13 @@
 import { Menu, MenuItem } from "@mui/material"
 
-interface FilterMenuProps {
+interface SortMenuProps {
   anchorEl: HTMLElement | null
   onClose: () => void
   options: string[]
   onSelect: (option: string) => void
 }
 
-export function FilterMenu({ anchorEl, onClose, options, onSelect }: FilterMenuProps) {
+export function SortMenu({ anchorEl, onClose, options, onSelect }: SortMenuProps) {
   const handleSelect = (option: string) => {
     onSelect(option)
     onClose()
@@ -20,10 +20,7 @@ export function FilterMenu({ anchorEl, onClose, options, onSelect }: FilterMenuP
       onClose={onClose}
     >
       {options.map((option) => (
-        <MenuItem 
-          key={option} 
-          onClick={() => handleSelect(option)}
-        >
+        <MenuItem key={option} onClick={() => handleSelect(option)}>
           {option}
         </MenuItem>
       ))}

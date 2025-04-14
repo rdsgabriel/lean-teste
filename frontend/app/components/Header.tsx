@@ -1,32 +1,29 @@
 import { Stack, Typography, Box } from "@mui/material"
-import Link from "next/link"
 
 const NAV_LINKS = [
-  { href: '/.', label: 'Clientes', isActive: true },
-  { href: '/.', label: 'Endereços' },
-  { href: '/.', label: 'Entregas' },
+  { label: 'Clientes', isActive: true },
+  { label: 'Endereços' },
+  { label: 'Entregas' },
 ]
 
 interface NavLinkProps {
-  href: string
   label: string
   isActive?: boolean
 }
 
-function NavLink({ href, label, isActive }: NavLinkProps) {
+function NavLink({ label, isActive }: NavLinkProps) {
   if (isActive) {
     return (
       <Box sx={{ position: 'relative' }}>
-        <Link 
-          href={href}
-          style={{ 
-            textDecoration: 'none',
+        <Typography
+          sx={{ 
             color: '#7C3AED',
             fontSize: '14px',
+            cursor: 'pointer'
           }}
         >
           {label}
-        </Link>
+        </Typography>
         <Box
           sx={{
             position: 'absolute',
@@ -42,16 +39,15 @@ function NavLink({ href, label, isActive }: NavLinkProps) {
   }
 
   return (
-    <Link 
-      href={href}
-      style={{ 
-        textDecoration: 'none',
+    <Typography 
+      sx={{ 
         color: '#71717A',
         fontSize: '14px',
+        cursor: 'pointer'
       }}
     >
       {label}
-    </Link>
+    </Typography>
   )
 }
 
@@ -72,7 +68,7 @@ export function Header() {
 
         <Stack direction="row" spacing={4}>
           {NAV_LINKS.map((link) => (
-            <NavLink key={link.href} {...link} />
+            <NavLink key={link.label} {...link} />
           ))}
         </Stack>
       </Stack>

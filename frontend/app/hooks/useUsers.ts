@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useApi } from "./useApi"
-import { GridFilterModel, GridSortModel } from "@mui/x-data-grid"
+import { GridSortModel } from "@mui/x-data-grid"
+import { Filter } from "../types/filter"
 
 export interface User {
   id: number
@@ -37,7 +38,7 @@ interface UseUsersFilters {
   page?: number
   perPage?: number
   sortModel?: GridSortModel
-  filterModel?: GridFilterModel
+  filters?: Filter[]
   searchQuery?: string
 }
 
@@ -48,7 +49,7 @@ export function useUsers(filters: UseUsersFilters = {}) {
     page = 1, 
     perPage = 10,
     sortModel = [],
-    filterModel,
+    filters: filterItems = [],
     searchQuery = ""
   } = filters
 
@@ -62,16 +63,18 @@ export function useUsers(filters: UseUsersFilters = {}) {
     }
 
     if (sortModel.length > 0) {
-      params.append("orderBy", sortModel[0].field)
-      params.append("order", sortModel[0].sort === "desc" ? "DESC" : "ASC")
-    }
+      // Mapeia os campos do frontend para o backend
+      const fieldMap: Record<string, string> = {
+        id: 'id',
+        name: 'name',
+        phone: 'phone',
+        isActive: 'isActive',
+        createdAt: 'createdAt'
+      }
 
-    if (filterModel?.items.length) {
-      filterModel.items.forEach((filter, index) => {
-        params.append(`filters[${index}][field]`, filter.field)
-        params.append(`filters[${index}][operator]`, filter.operator)
-        params.append(`filters[${index}][value]`, filter.value as string)
-      })
+      const field = fieldMap[sortModel[0].field] || sortModel[0].field
+      params.append("orderBy", field)
+      params.append("order", sortModel[0].sort === "desc" ? "DESC" : "ASC")
     }
 
     return params.toString()
@@ -82,21 +85,20 @@ export function useUsers(filters: UseUsersFilters = {}) {
     isLoading,
     error,
   } = useQuery<PaginatedResponse, Error>({
-    queryKey: ["users", { page, perPage, sortModel, filterModel, searchQuery }],
+    queryKey: ["users", { page, perPage, sortModel, filterItems, searchQuery }],
     queryFn: async () => {
-      let endpoint = '/users'
-      
-      if (searchQuery) {
-        endpoint = '/users/search'
-      } else if (!sortModel.length) {
-        endpoint = '/users/list'
-      }
-      
-      const url = `${endpoint}?${buildQueryString()}`
-      const response = await fetchApi(url)
-      
-      // Se for uma busca, adapta o formato da resposta
-      if (searchQuery) {
+      if (filterItems.length > 0) {
+        const response = await fetchApi('/users/filter', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filters: filterItems
+          }),
+        })
+
+        // Adapta a resposta para o formato paginado
         const start = (page - 1) * perPage
         const end = start + perPage
         const paginatedResults = response.slice(start, end)
@@ -108,18 +110,17 @@ export function useUsers(filters: UseUsersFilters = {}) {
           totalPages: Math.ceil(response.length / perPage)
         }
       }
+
+      // Sempre usa o endpoint /users para listagem e ordenação
+      const url = `/users?${buildQueryString()}`
+      const response = await fetchApi(url)
       
-      // Se for ordenação, adapta o formato da resposta
-      if (sortModel.length > 0) {
-        return {
-          data: response.slice((page - 1) * perPage, page * perPage),
-          total: response.length,
-          page,
-          totalPages: Math.ceil(response.length / perPage)
-        }
+      return {
+        data: response,
+        total: response.length,
+        page,
+        totalPages: Math.ceil(response.length / perPage)
       }
-      
-      return response
     },
     staleTime: 5000,
     gcTime: 300000,
