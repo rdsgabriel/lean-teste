@@ -13,7 +13,7 @@ Sistema de gerenciamento de usuários com funcionalidades de listagem, filtragem
 ### Rodando com Docker (recomendado)
 
 ```bash
-docker-compose up --build
+docker-compose up 
 ```
 
 - Acesse a documentação da API no Swagger: [http://localhost:3000/api#](http://localhost:3000/api#)
