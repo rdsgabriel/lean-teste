@@ -135,9 +135,7 @@ Optou-se por implementar manualmente várias funcionalidades que poderiam ter si
 ### Funcionalidades
 
 1. **Autenticação e Autorização**:
-   - Implementar JWT para autenticação segura.
    - Controle de acesso baseado em roles.
-   - Implementar refresh tokens para melhor experiência do usuário.
 
 2. **UX/UI**:
    - Implementar feedback visual para ações do usuário, como toasts.
